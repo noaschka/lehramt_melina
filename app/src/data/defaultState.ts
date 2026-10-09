@@ -26,7 +26,7 @@ export function defaultState(): AppState {
     settings: {
       studiengang: 'Lehramt Gymnasium (Englisch, Politik und Gesellschaft)',
       hochschule: 'Universität Passau',
-      gesamtEctsSoll: 0,
+      gesamtEctsSoll: 270,
       regelstudienzeitEnde: null,
       zielschnitt: null,
       spacedRepetitionIntervalleTage: [1, 3, 7, 14, 30],
