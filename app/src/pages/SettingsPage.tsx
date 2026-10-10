@@ -5,6 +5,7 @@ import { Field, inputClass } from '../components/ui/FormField';
 import type { AppState, Modul, StundenplanBlock } from '../types';
 import { blockStartMin } from '../utils/stundenplan';
 import { parseTabellenZeilen, zeileZuModul } from '../utils/tabellenImport';
+import { parseStundenplanZeilen, blockZuStundenplanBlock } from '../utils/stundenplanImport';
 
 const WOCHENTAGE_LABEL = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 const ART_LABEL: Record<StundenplanBlock['art'], string> = {
@@ -241,6 +242,84 @@ function TabellenImport({ bestehendeKuerzel }: { bestehendeKuerzel: Set<string> 
           className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {zeilen.length ? `${zeilen.length} Modul${zeilen.length === 1 ? '' : 'e'} importieren` : 'Importieren'}
+        </button>
+        {erledigt && <span className="text-sm text-emerald-600 dark:text-emerald-400">{erledigt}</span>}
+      </div>
+    </div>
+  );
+}
+
+function StundenplanTabellenImport() {
+  const upsertBlock = useStore((s) => s.upsertBlock);
+  const [text, setText] = useState('');
+  const [erledigt, setErledigt] = useState<string | null>(null);
+
+  const { bloecke, uebersprungen } = useMemo(() => parseStundenplanZeilen(text), [text]);
+
+  function importieren() {
+    bloecke.forEach((b) => upsertBlock(blockZuStundenplanBlock(b, uuid())));
+    setErledigt(`${bloecke.length} ${bloecke.length === 1 ? 'Block' : 'Blöcke'} importiert.`);
+    setText('');
+    setTimeout(() => setErledigt(null), 3000);
+  }
+
+  return (
+    <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+      <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Stundenplan aus Tabelle importieren</div>
+      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+        Zeilen hier einfügen (durch Tab, Semikolon oder Komma getrennt). Spalten:{' '}
+        <strong>Tag</strong>, <strong>Start</strong>, <strong>Ende</strong>, <strong>Titel</strong>, Kurztitel,
+        Fach, Notiz, Art (Standard: Vorlesung), Wochen (Standard: AB). Tag als Mo/Di/Mi/Do/Fr/Sa/So, Zeiten als
+        HH:MM. Eine Kopfzeile wird automatisch erkannt.
+      </p>
+      <textarea
+        className={`${inputClass} font-mono text-xs`}
+        rows={5}
+        placeholder={'Mo\t08:00\t10:00\tEinführung in die Linguistik\tLinguistik\tEnglisch\t(AM) HS 9'}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+
+      {bloecke.length > 0 && (
+        <div className="mt-3 max-h-56 overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-400 dark:bg-slate-800/60">
+              <tr>
+                <th className="px-2 py-1">Tag</th>
+                <th className="px-2 py-1">Zeit</th>
+                <th className="px-2 py-1">Titel</th>
+                <th className="px-2 py-1">Fach</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {bloecke.map((b, i) => (
+                <tr key={i}>
+                  <td className="px-2 py-1">{WOCHENTAGE_LABEL[b.wochentag].slice(0, 2)}</td>
+                  <td className="px-2 py-1">
+                    {b.start}&ndash;{b.ende}
+                  </td>
+                  <td className="px-2 py-1">{b.titel}</td>
+                  <td className="px-2 py-1">{b.fach ?? '–'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {uebersprungen > 0 && (
+        <p className="mt-2 text-xs text-slate-400">
+          {uebersprungen} Zeile{uebersprungen === 1 ? '' : 'n'} übersprungen (Tag/Start/Ende/Titel fehlt oder ungültig).
+        </p>
+      )}
+
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={importieren}
+          disabled={!bloecke.length}
+          className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {bloecke.length ? `${bloecke.length} ${bloecke.length === 1 ? 'Block' : 'Blöcke'} importieren` : 'Importieren'}
         </button>
         {erledigt && <span className="text-sm text-emerald-600 dark:text-emerald-400">{erledigt}</span>}
       </div>
@@ -574,6 +653,8 @@ export default function SettingsPage() {
       </div>
 
       <TabellenImport bestehendeKuerzel={new Set(module.map((m) => m.kuerzel))} />
+
+      <StundenplanTabellenImport />
 
       <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Backup</div>
