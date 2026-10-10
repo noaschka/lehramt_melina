@@ -36,7 +36,7 @@ export default function DashboardPage() {
             {erreicht} / {settings.gesamtEctsSoll}
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div className="h-full rounded-full bg-slate-900 dark:bg-white" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-[var(--akzent)]" style={{ width: `${pct}%` }} />
           </div>
           <div className="mt-1 text-xs text-slate-400">{pct}% &middot; {offen} ECTS offen</div>
         </div>

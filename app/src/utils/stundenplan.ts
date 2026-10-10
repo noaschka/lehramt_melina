@@ -58,3 +58,25 @@ export function istMinutenDerWoche(eintraege: WochenplanEintrag[]): number {
 export function kalenderwoche(montagIso: string): number {
   return getISOWeek(parseISO(montagIso));
 }
+
+function hexZuRgb(hex: string): [number, number, number] {
+  const normal = hex.replace('#', '');
+  const voll = normal.length === 3 ? normal.split('').map((c) => c + c).join('') : normal;
+  const num = parseInt(voll, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+/** Liefert '#000000' oder '#ffffff' je nachdem, was auf der Hintergrundfarbe besser lesbar ist. */
+export function kontrastText(hex: string): string {
+  const [r, g, b] = hexZuRgb(hex);
+  const luminanz = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminanz > 0.6 ? '#000000' : '#ffffff';
+}
+
+/** Mischt eine Hex-Farbe mit Schwarz (0 = unverändert, 1 = ganz schwarz) - für den "erledigt"-Zustand. */
+export function abdunkeln(hex: string, anteil: number): string {
+  const [r, g, b] = hexZuRgb(hex);
+  const mix = (kanal: number) => Math.round(kanal * (1 - anteil));
+  const zuHex = (kanal: number) => kanal.toString(16).padStart(2, '0');
+  return `#${zuHex(mix(r))}${zuHex(mix(g))}${zuHex(mix(b))}`;
+}

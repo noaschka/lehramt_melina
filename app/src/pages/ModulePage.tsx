@@ -72,7 +72,7 @@ function ModuleRow({ m, offen, toggle }: { m: Modul; offen: boolean; toggle: (id
           <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
             <Link
               to={`/module/${m.id}/lernplan`}
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900"
+              className="rounded-lg bg-[var(--akzent)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]"
             >
               Lernplan
             </Link>
@@ -210,7 +210,7 @@ export default function ModulePage() {
         </div>
         <Link
           to="/module/neu"
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+          className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
         >
           + Modul hinzufügen
         </Link>

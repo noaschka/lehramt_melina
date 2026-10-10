@@ -64,6 +64,7 @@ function backfillState(partial: unknown): AppState {
       ...basis.settings,
       ...p.settings,
       abWochen: { ...basis.settings.abWochen, ...p.settings?.abWochen },
+      fachFarben: { ...basis.settings.fachFarben, ...p.settings?.fachFarben },
     },
   };
 }

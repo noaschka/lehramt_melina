@@ -13,6 +13,8 @@ import {
   sollMinutenDerWoche,
   istMinutenDerWoche,
   kalenderwoche,
+  kontrastText,
+  abdunkeln,
 } from '../utils/stundenplan';
 import type { Modul, StundenplanBlock, WochenplanEintrag } from '../types';
 
@@ -60,6 +62,19 @@ const ART_LABEL: Record<StundenplanBlock['art'], string> = {
   vorlesung: 'Vorlesung',
   frei: 'Frei',
 };
+
+function blockFarbStil(
+  block: StundenplanBlock,
+  erledigt: boolean,
+  fachFarben: Record<string, string>,
+): { className: string; style?: { backgroundColor: string; color: string } } {
+  const eigeneFarbe = block.fach ? fachFarben[block.fach] : undefined;
+  if (eigeneFarbe) {
+    const bg = erledigt && block.art === 'lernblock' ? abdunkeln(eigeneFarbe, 0.55) : eigeneFarbe;
+    return { className: '', style: { backgroundColor: bg, color: kontrastText(bg) } };
+  }
+  return { className: erledigt ? ART_FARBEN[block.art].erledigt : ART_FARBEN[block.art].basis };
+}
 
 function Zeitachse({
   startMin,
@@ -112,18 +127,18 @@ function TagKopf({ tagLabel, datumLabel, ausgewaehlt, heute, onAuswaehlen }: Tag
       }}
       className={`flex min-h-11 w-full cursor-pointer flex-col items-center justify-center border-b px-1 py-1 text-center dark:border-slate-800 ${
         ausgewaehlt
-          ? 'border-slate-900 bg-slate-900 dark:border-white dark:bg-white'
+          ? 'border-[var(--akzent)] bg-[var(--akzent)]'
           : `border-slate-100 ${heute ? 'bg-slate-50 dark:bg-slate-800/40' : ''}`
       }`}
     >
       <div
         className={`text-xs font-bold ${
-          ausgewaehlt ? 'text-white dark:text-slate-900' : heute ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
+          ausgewaehlt ? 'text-white' : heute ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
         }`}
       >
         {tagLabel}
       </div>
-      <div className={`text-[10px] ${ausgewaehlt ? 'text-white/70 dark:text-slate-900/70' : 'text-slate-400'}`}>{datumLabel}</div>
+      <div className={`text-[10px] ${ausgewaehlt ? 'text-white/70' : 'text-slate-400'}`}>{datumLabel}</div>
     </div>
   );
 }
@@ -137,9 +152,10 @@ interface TagRasterKoerperProps {
   erledigtIds: Set<string>;
   kompakt: boolean;
   pxProMin: number;
+  fachFarben: Record<string, string>;
 }
 
-function TagRasterKoerper({ bloecke, startMin, endeMin, heute, aktuelleZeitMin, erledigtIds, kompakt, pxProMin }: TagRasterKoerperProps) {
+function TagRasterKoerper({ bloecke, startMin, endeMin, heute, aktuelleZeitMin, erledigtIds, kompakt, pxProMin, fachFarben }: TagRasterKoerperProps) {
   const hoehe = (endeMin - startMin) * pxProMin;
   return (
     <div className={`relative w-full ${heute ? 'bg-slate-50/60 dark:bg-slate-800/20' : ''}`} style={{ height: hoehe }}>
@@ -148,12 +164,12 @@ function TagRasterKoerper({ bloecke, startMin, endeMin, heute, aktuelleZeitMin, 
         const h = Math.max(blockDauerMin(b) * pxProMin, 16);
         const erledigt = erledigtIds.has(b.id);
         const haken = erledigt && b.art === 'lernblock';
-        const farben = erledigt ? ART_FARBEN[b.art].erledigt : ART_FARBEN[b.art].basis;
+        const { className: farben, style: farbStil } = blockFarbStil(b, erledigt, fachFarben);
         return (
           <div
             key={b.id}
             className={`absolute inset-x-0.5 z-0 rounded px-1 py-0.5 text-[9px] leading-tight ${farben}`}
-            style={{ top, height: h }}
+            style={{ top, height: h, ...farbStil }}
             title={`${b.titel} · ${b.start}–${b.ende}`}
           >
             {kompakt ? (
@@ -193,6 +209,7 @@ interface TagDetailPanelProps {
   onHinzufuegen: (modulId: string, geplantMin: number) => void;
   onIstZeitPlus: (eintrag: WochenplanEintrag, minuten: number) => void;
   onLoeschen: (eintragId: string) => void;
+  fachFarben: Record<string, string>;
 }
 
 function TagDetailPanel({
@@ -206,6 +223,7 @@ function TagDetailPanel({
   onHinzufuegen,
   onIstZeitPlus,
   onLoeschen,
+  fachFarben,
 }: TagDetailPanelProps) {
   const [modulId, setModulId] = useState(module[0]?.id ?? '');
   const [geplantMin, setGeplantMin] = useState(30);
@@ -219,7 +237,7 @@ function TagDetailPanel({
         <div className="text-sm font-bold">
           {tag.tagLabel} <span className="font-normal text-slate-400">{tag.label}</span>
           {heute && (
-            <span className="ml-2 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-white dark:text-slate-900">
+            <span className="ml-2 rounded-full bg-[var(--akzent)] px-2 py-0.5 text-[10px] font-semibold text-white">
               Heute
             </span>
           )}
@@ -236,17 +254,18 @@ function TagDetailPanel({
               const erledigt = erledigtIds.has(b.id);
               const mod = module.find((m) => m.id === b.modulId);
               const istToggle = b.art === 'lernblock';
+              const { className: farben, style: farbStil } = blockFarbStil(b, erledigt, fachFarben);
               return (
                 <div
                   key={b.id}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                    erledigt ? ART_FARBEN[b.art].erledigt : ART_FARBEN[b.art].basis
-                  }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${farben}`}
+                  style={farbStil}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="break-words font-semibold">{b.titel}</div>
                     <div className="text-xs opacity-80">
                       {b.start}&ndash;{b.ende} &middot; {ART_LABEL[b.art]}
+                      {b.fach && ` · ${b.fach}`}
                       {mod && ` · ${mod.kuerzel || mod.name}`}
                     </div>
                     {b.notiz && <div className="mt-0.5 break-words text-xs opacity-70">{b.notiz}</div>}
@@ -326,7 +345,7 @@ function TagDetailPanel({
             />
             <button
               onClick={() => modulId && onHinzufuegen(modulId, geplantMin)}
-              className="flex h-9 min-w-[44px] shrink-0 items-center justify-center rounded-lg bg-slate-900 px-3 text-xs font-semibold text-white dark:bg-white dark:text-slate-900"
+              className="flex h-9 min-w-[44px] shrink-0 items-center justify-center rounded-lg bg-[var(--akzent)] px-3 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]"
             >
               +
             </button>
@@ -346,6 +365,7 @@ export default function WochenplanPage() {
   const wochenplaene = useStore((s) => s.wochenplaene);
   const stundenplan = useStore((s) => s.stundenplan);
   const abWochen = useStore((s) => s.settings.abWochen);
+  const fachFarben = useStore((s) => s.settings.fachFarben);
   const upsertEintrag = useStore((s) => s.upsertEintrag);
   const deleteEintrag = useStore((s) => s.deleteEintrag);
   const toggleBlockErledigt = useStore((s) => s.toggleBlockErledigt);
@@ -478,6 +498,7 @@ export default function WochenplanPage() {
                     erledigtIds={erledigtIds}
                     kompakt={!istDesktop}
                     pxProMin={pxProMin}
+                    fachFarben={fachFarben}
                   />
                 </div>
               ))}
@@ -501,6 +522,7 @@ export default function WochenplanPage() {
               upsertEintrag(montag, { ...eintrag, tatsaechlichMin: eintrag.tatsaechlichMin + minuten })
             }
             onLoeschen={(eintragId) => deleteEintrag(montag, eintragId)}
+            fachFarben={fachFarben}
           />
         </div>
       </div>

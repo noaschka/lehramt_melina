@@ -2,6 +2,38 @@
 
 html {
   color-scheme: light dark;
+  --akzent: #0f172a;
+  --akzent-hover: #334155;
+}
+
+html[data-akzent='indigo'] {
+  --akzent: #4f46e5;
+  --akzent-hover: #4338ca;
+}
+
+html[data-akzent='rose'] {
+  --akzent: #e11d48;
+  --akzent-hover: #be123c;
+}
+
+html[data-akzent='smaragd'] {
+  --akzent: #059669;
+  --akzent-hover: #047857;
+}
+
+html[data-akzent='violett'] {
+  --akzent: #7c3aed;
+  --akzent-hover: #6d28d9;
+}
+
+html[data-akzent='amber'] {
+  --akzent: #d97706;
+  --akzent-hover: #b45309;
+}
+
+html[data-akzent='himmelblau'] {
+  --akzent: #0284c7;
+  --akzent-hover: #0369a1;
 }
 
 body {

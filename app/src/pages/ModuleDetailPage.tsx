@@ -188,7 +188,7 @@ export default function ModuleDetailPage() {
           </label>
           <button
             onClick={versuchHinzufuegen}
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900"
+            className="rounded-lg bg-[var(--akzent)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
           >
             + Versuch erfassen
           </button>
@@ -234,7 +234,7 @@ export default function ModuleDetailPage() {
           </label>
           <button
             onClick={dokumentHinzufuegen}
-            className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900"
+            className="shrink-0 rounded-lg bg-[var(--akzent)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
           >
             + Verlinken
           </button>

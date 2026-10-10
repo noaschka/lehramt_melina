@@ -39,7 +39,7 @@ export default function NotenPage() {
               <span className="w-20 shrink-0 text-sm text-slate-500">{bucket}</span>
               <div className="h-5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
-                  className="h-full rounded-full bg-slate-900 dark:bg-white"
+                  className="h-full rounded-full bg-[var(--akzent)]"
                   style={{ width: `${(count / maxCount) * 100}%` }}
                 />
               </div>
