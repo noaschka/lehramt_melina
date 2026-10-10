@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import { useStore } from '../store/useStore';
 import { Field, inputClass } from '../components/ui/FormField';
 import type { AppState, Modul, StundenplanBlock } from '../types';
 import { blockStartMin } from '../utils/stundenplan';
+import { parseTabellenZeilen, zeileZuModul } from '../utils/tabellenImport';
 
 const WOCHENTAGE_LABEL = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 const ART_LABEL: Record<StundenplanBlock['art'], string> = {
@@ -17,6 +18,16 @@ const WOCHEN_LABEL: Record<StundenplanBlock['wochen'], string> = {
   B: 'nur Woche B',
 };
 
+const AKZENT_OPTIONEN = [
+  { id: 'slate', name: 'Schiefer', farbe: '#0f172a' },
+  { id: 'indigo', name: 'Indigo', farbe: '#4f46e5' },
+  { id: 'rose', name: 'Rosa', farbe: '#e11d48' },
+  { id: 'smaragd', name: 'Smaragd', farbe: '#059669' },
+  { id: 'violett', name: 'Violett', farbe: '#7c3aed' },
+  { id: 'amber', name: 'Amber', farbe: '#d97706' },
+  { id: 'himmelblau', name: 'Himmelblau', farbe: '#0284c7' },
+];
+
 function neuerBlock(): StundenplanBlock {
   return {
     id: uuid(),
@@ -27,6 +38,7 @@ function neuerBlock(): StundenplanBlock {
     titel: '',
     kurz: '',
     modulId: null,
+    fach: null,
     wochen: 'AB',
     notiz: '',
     quelle: 'manuell',
@@ -45,6 +57,7 @@ function BlockForm({
   onAbbrechen: () => void;
 }) {
   const [block, setBlock] = useState(initial);
+  const faecher = Array.from(new Set(module.map((m) => m.fach).filter((f): f is string => !!f))).sort();
 
   function patch(p: Partial<StundenplanBlock>) {
     setBlock((b) => ({ ...b, ...p }));
@@ -96,7 +109,20 @@ function BlockForm({
           <input className={`${inputClass} !py-1.5 text-sm`} value={block.kurz} onChange={(e) => patch({ kurz: e.target.value })} />
         </Field>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Field label="Fach" hint="für die Farbe im Zeitraster">
+          <input
+            className={`${inputClass} !py-1.5 text-sm`}
+            list="block-faecher-liste"
+            value={block.fach ?? ''}
+            onChange={(e) => patch({ fach: e.target.value || null })}
+          />
+          <datalist id="block-faecher-liste">
+            {faecher.map((f) => (
+              <option key={f} value={f} />
+            ))}
+          </datalist>
+        </Field>
         <Field label="Modul">
           <select
             className={`${inputClass} !py-1.5 text-sm`}
@@ -129,7 +155,7 @@ function BlockForm({
         <input className={`${inputClass} !py-1.5 text-sm`} value={block.notiz} onChange={(e) => patch({ notiz: e.target.value })} />
       </Field>
       <div className="flex items-center gap-2 pt-1">
-        <button type="submit" className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-white dark:text-slate-900">
+        <button type="submit" className="rounded-lg bg-[var(--akzent)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]">
           Speichern
         </button>
         <button
@@ -141,6 +167,84 @@ function BlockForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function TabellenImport({ bestehendeKuerzel }: { bestehendeKuerzel: Set<string> }) {
+  const addModul = useStore((s) => s.addModul);
+  const [text, setText] = useState('');
+  const [erledigt, setErledigt] = useState<string | null>(null);
+
+  const { zeilen, uebersprungen } = useMemo(() => parseTabellenZeilen(text), [text]);
+
+  function importieren() {
+    zeilen.forEach((zeile) => addModul(zeileZuModul(zeile)));
+    setErledigt(`${zeilen.length} Modul${zeilen.length === 1 ? '' : 'e'} importiert.`);
+    setText('');
+    setTimeout(() => setErledigt(null), 3000);
+  }
+
+  return (
+    <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+      <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Module aus Tabelle importieren</div>
+      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+        Zeilen aus Excel/Numbers/einer Uni-Seite hier einfügen. Spalten (durch Tab, Semikolon oder Komma
+        getrennt): <strong>Name</strong>, Kürzel, Fach, Semester, ECTS, Prüfungsform &ndash; nur Name ist
+        Pflicht, der Rest bekommt sinnvolle Standardwerte. Eine Kopfzeile wird automatisch erkannt.
+      </p>
+      <textarea
+        className={`${inputClass} font-mono text-xs`}
+        rows={5}
+        placeholder={'Fachdidaktik Englisch I\tENG-FD1\tEnglisch\t3\t5\tKlausur'}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+
+      {zeilen.length > 0 && (
+        <div className="mt-3 max-h-56 overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-400 dark:bg-slate-800/60">
+              <tr>
+                <th className="px-2 py-1">Name</th>
+                <th className="px-2 py-1">Kürzel</th>
+                <th className="px-2 py-1">Fach</th>
+                <th className="px-2 py-1">Sem.</th>
+                <th className="px-2 py-1">ECTS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {zeilen.map((z, i) => (
+                <tr key={i} className={bestehendeKuerzel.has(z.kuerzel) ? 'text-amber-600 dark:text-amber-400' : ''}>
+                  <td className="px-2 py-1">{z.name}</td>
+                  <td className="px-2 py-1">
+                    {z.kuerzel}
+                    {bestehendeKuerzel.has(z.kuerzel) && ' ⚠︎'}
+                  </td>
+                  <td className="px-2 py-1">{z.fach ?? '–'}</td>
+                  <td className="px-2 py-1">{z.semesterSoll}</td>
+                  <td className="px-2 py-1">{z.ects}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {uebersprungen > 0 && (
+        <p className="mt-2 text-xs text-slate-400">{uebersprungen} Zeile{uebersprungen === 1 ? '' : 'n'} ohne Namen übersprungen.</p>
+      )}
+
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={importieren}
+          disabled={!zeilen.length}
+          className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {zeilen.length ? `${zeilen.length} Modul${zeilen.length === 1 ? '' : 'e'} importieren` : 'Importieren'}
+        </button>
+        {erledigt && <span className="text-sm text-emerald-600 dark:text-emerald-400">{erledigt}</span>}
+      </div>
+    </div>
   );
 }
 
@@ -175,6 +279,10 @@ export default function SettingsPage() {
   const stundenplanSortiert = [...stundenplan].sort(
     (a, b) => a.wochentag - b.wochentag || blockStartMin(a) - blockStartMin(b),
   );
+
+  const alleFaecher = Array.from(
+    new Set([...module.map((m) => m.fach), ...stundenplan.map((b) => b.fach)].filter((f): f is string => !!f)),
+  ).sort();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -275,7 +383,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
           >
             Speichern
           </button>
@@ -283,11 +391,65 @@ export default function SettingsPage() {
         </div>
       </form>
 
-      <div className="mt-6 max-w-lg rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-        Der Modulkatalog wurde automatisiert aus dem offiziellen Modulhandbuch extrahiert. Bei den
-        Wahlpflichtfächern (W-19, W-20, W-30&ndash;W-35) sind mehr Module gelistet, als tatsächlich
-        Pflicht sind &ndash; bitte in der Modulübersicht die für dich nicht relevanten Wahlmodule
-        löschen, damit ECTS-Fortschritt und Notenschnitt stimmen.
+      <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Design</div>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Akzentfarbe für Buttons, Markierungen und Fortschrittsbalken.</p>
+        <div className="flex flex-wrap gap-2">
+          {AKZENT_OPTIONEN.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => updateSettings({ akzent: opt.id })}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                settings.akzent === opt.id
+                  ? 'border-slate-900 bg-slate-100 dark:border-white dark:bg-slate-800'
+                  : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60'
+              }`}
+            >
+              <span className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: opt.farbe }} />
+              {opt.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Fach-Farben</div>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          Eigene Farbe pro Fach für den Zeitraster im Wochenplan. Ohne eigene Farbe wird nach Blockart
+          eingefärbt (Lernblock, Vorlesung, Frei).
+        </p>
+        {alleFaecher.length ? (
+          <div className="space-y-2">
+            {alleFaecher.map((fach) => (
+              <div key={fach} className="flex items-center justify-between gap-3 text-sm">
+                <span className="min-w-0 flex-1 truncate">{fach}</span>
+                <input
+                  type="color"
+                  className="h-8 w-12 shrink-0 cursor-pointer rounded border border-slate-300 bg-transparent dark:border-slate-700"
+                  value={settings.fachFarben[fach] ?? '#64748b'}
+                  onChange={(e) => updateSettings({ fachFarben: { ...settings.fachFarben, [fach]: e.target.value } })}
+                />
+                {settings.fachFarben[fach] && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const { [fach]: _entfernt, ...rest } = settings.fachFarben;
+                      updateSettings({ fachFarben: rest });
+                    }}
+                    className="shrink-0 text-xs text-slate-400 hover:text-red-500"
+                  >
+                    Zurücksetzen
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">
+            Noch keine Fächer vorhanden &ndash; trage bei Modulen oder Stundenplan-Blöcken ein Fach ein.
+          </p>
+        )}
       </div>
 
       <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -328,7 +490,7 @@ export default function SettingsPage() {
               setSaved(true);
               setTimeout(() => setSaved(false), 1500);
             }}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
           >
             Speichern
           </button>
@@ -365,6 +527,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="text-xs text-slate-400">
                     {ART_LABEL[block.art]} &middot; {WOCHEN_LABEL[block.wochen]}
+                    {block.fach && ` · ${block.fach}`}
                     {block.modulId && ` · ${module.find((m) => m.id === block.modulId)?.kuerzel ?? ''}`}
                   </div>
                 </div>
@@ -410,6 +573,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <TabellenImport bestehendeKuerzel={new Set(module.map((m) => m.kuerzel))} />
+
       <div className="mt-4 max-w-lg rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Backup</div>
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
@@ -419,7 +584,7 @@ export default function SettingsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={exportieren}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
           >
             &darr; Als JSON exportieren
           </button>

@@ -218,7 +218,7 @@ export default function ModulFormPage() {
         )}
 
         <div className="flex gap-3 pt-2">
-          <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+          <button type="submit" className="rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]">
             Speichern
           </button>
           <Link

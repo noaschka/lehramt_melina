@@ -73,7 +73,7 @@ export default function LernplanPage() {
       </div>
 
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <div className="h-full rounded-full bg-slate-900 dark:bg-white" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-[var(--akzent)]" style={{ width: `${pct}%` }} />
       </div>
 
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -126,7 +126,7 @@ export default function LernplanPage() {
           />
           <button
             onClick={hinzufuegen}
-            className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900"
+            className="shrink-0 rounded-lg bg-[var(--akzent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--akzent-hover)]"
           >
             + Thema
           </button>

@@ -31,6 +31,8 @@ export function defaultState(): AppState {
       zielschnitt: null,
       spacedRepetitionIntervalleTage: [1, 3, 7, 14, 30],
       abWochen: { aUngerade: true, labelA: 'Woche A', labelB: 'Woche B' },
+      akzent: 'slate',
+      fachFarben: {},
     },
   };
 }

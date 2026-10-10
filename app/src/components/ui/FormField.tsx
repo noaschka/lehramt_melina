@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 export const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:focus:border-white';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--akzent)] focus:ring-2 focus:ring-[var(--akzent)]/10 dark:border-slate-700 dark:bg-slate-900 dark:focus:border-[var(--akzent)]';
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (

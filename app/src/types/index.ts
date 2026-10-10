@@ -79,6 +79,7 @@ export interface StundenplanBlock {
   titel: string;
   kurz: string;
   modulId: string | null;
+  fach: string | null;
   wochen: 'AB' | 'A' | 'B';
   notiz: string;
   quelle: 'manuell' | 'import';
@@ -105,6 +106,8 @@ export interface Settings {
   zielschnitt: number | null;
   spacedRepetitionIntervalleTage: number[];
   abWochen: AbWochenSettings;
+  akzent: string;
+  fachFarben: Record<string, string>;
 }
 
 export interface AppState {

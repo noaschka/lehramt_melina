@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 
@@ -16,13 +17,18 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
   return [
     'block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
     isActive
-      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+      ? 'bg-[var(--akzent)] text-white'
       : 'text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800',
   ].join(' ');
 }
 
 export default function Layout() {
   const studiengang = useStore((s) => s.settings.studiengang);
+  const akzent = useStore((s) => s.settings.akzent);
+
+  useEffect(() => {
+    document.documentElement.dataset.akzent = akzent;
+  }, [akzent]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 lg:flex">

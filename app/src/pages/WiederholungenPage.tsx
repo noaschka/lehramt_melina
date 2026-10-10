@@ -49,7 +49,7 @@ export default function WiederholungenPage() {
                     </div>
                     <button
                       onClick={() => alsWiederholtMarkieren(modul.id, thema.id, thema.wiederholungen)}
-                      className="shrink-0 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-white dark:text-slate-900"
+                      className="shrink-0 rounded-lg bg-[var(--akzent)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]"
                     >
                       ✓ Wiederholt
                     </button>
@@ -73,7 +73,7 @@ export default function WiederholungenPage() {
                     </div>
                     <button
                       onClick={() => alsWiederholtMarkieren(modul.id, thema.id, thema.wiederholungen)}
-                      className="shrink-0 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-white dark:text-slate-900"
+                      className="shrink-0 rounded-lg bg-[var(--akzent)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]"
                     >
                       ✓ Wiederholt
                     </button>

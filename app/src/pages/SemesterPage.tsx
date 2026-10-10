@@ -71,7 +71,7 @@ export default function SemesterPage() {
                 setForm({ ...EMPTY, nummer: (semesterListe.at(-1)?.nummer ?? 0) + 1 });
                 setEditing(true);
               }}
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900"
+              className="rounded-lg bg-[var(--akzent)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]"
             >
               + Semester
             </button>
@@ -109,7 +109,7 @@ export default function SemesterPage() {
               />
             </label>
             <div className="col-span-2 flex gap-2 sm:col-span-4">
-              <button type="submit" className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-white dark:text-slate-900">
+              <button type="submit" className="rounded-lg bg-[var(--akzent)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--akzent-hover)]">
                 Speichern
               </button>
               <button
